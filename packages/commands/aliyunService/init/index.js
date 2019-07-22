@@ -12,6 +12,7 @@ const {
   NAMESPACE = 'test',
   REGION = 'cn-hangzhou',
   ACCESSKEY,
+  DOCKER_CONFIG_JSON,
   ACCESSKEY_SECRET,
 } = process.env
 
@@ -29,6 +30,20 @@ const readConfig = async (config) => {
       return true
     }
   })
+  if (!config.dockerConfigBase64) {
+    promps.push({
+      type: 'input',
+      default: DOCKER_CONFIG_JSON,
+      name: 'dockerConfigBase64',
+      message: '请输入dockerconfigjson',
+      validate: function (input){
+        if(!input) {
+          return '不能为空'
+        }
+        return true
+      }
+    })
+  }
   if (!config.namespace) {
     promps.push({
       type: 'input',
@@ -49,9 +64,11 @@ const readConfig = async (config) => {
       name: 'appEnv',
       message: '请选择环境',
       choices: [{
-        name: '测试环境', value: 'test'
+        name: '开发', value: 'development'
       }, {
-        name: '生产环境', value: 'production'
+        name: '测试', value: 'test'
+      }, {
+        name: '生产', value: 'production'
       }],
     })
   }
@@ -99,7 +116,12 @@ const initLogStore = async (config) => {
     await client.restCreate(logProjectName, 'configs', {
       configName: logStoreName,
       inputType: 'file',
+      logSample: '2018-11-16 10:42:33,575 INFO 81 [egg-sequelize](3ms) Executed (default): SELECT 1+1 AS result',
       inputDetail: {
+        enableRawLog: true,
+        discardUnmatch: true,
+        preserve: true,
+        localStorage: true,
         logType: 'common_reg_log',
         logPath: `/ecilogs-${namespace}`,
         logBeginRegex: '\\d+-\\d+-\\d+\\s\\d+:\\d+:\\d+,\\d+\\s.*',
@@ -107,7 +129,6 @@ const initLogStore = async (config) => {
         timeFormat: '',
         key: [ 'content' ],
         regex: '(.*)',
-        logSample: '2018-11-16 10:42:33,575 INFO 81 [egg-sequelize](3ms) Executed (default): SELECT 1+1 AS result',
         fileEncoding: 'utf8',
         filePattern: '*.log',
         topicFormat: 'none'

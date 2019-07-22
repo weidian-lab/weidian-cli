@@ -1,6 +1,6 @@
-exports.buildDockerConfigJsonYaml = ({ namespace }) => `apiVersion: v1
+exports.buildDockerConfigJsonYaml = ({ namespace, dockerConfigBase64 }) => `apiVersion: v1
 data:
-  .dockerconfigjson: ${process.env.DOCKER_CONFIG_JSON}
+  .dockerconfigjson: ${dockerConfigBase64}
 kind: Secret
 metadata:
   name: aliyun-docker-registry
