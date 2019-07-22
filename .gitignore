@@ -1,0 +1,9 @@
+coverage/
+/*.js
+yarn.lock
+node_modules/
+/secrets/
+/config/
+npm-debug.log
+!commitlint.config.js
+!.eslintrc.js

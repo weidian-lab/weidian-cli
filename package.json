@@ -1,0 +1,25 @@
+{
+  "name": "weidian-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "weidian": "bin/index.js"
+  },
+  "author": "sqlwwx <wwx_2012@live.com> (http://wiki.lab.wuweixing.com)",
+  "license": "MIT",
+  "devDependencies": {
+    "@commitlint/cli": "^8.1.0",
+    "@commitlint/config-conventional": "^8.1.0",
+    "husky": "^3.0.1",
+    "standard-version": "^6.0.1"
+  },
+  "dependencies": {
+    "alicloud-log": "^1.1.0",
+    "commander": "^2.20.0",
+    "inquirer": "^6.5.0"
+  }
+}
