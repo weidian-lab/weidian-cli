@@ -58,20 +58,6 @@ const readConfig = async (config) => {
       }
     })
   }
-  if (!config.appEnv) {
-    promps.push({
-      type: 'list',
-      name: 'appEnv',
-      message: '请选择环境',
-      choices: [{
-        name: '开发', value: 'development'
-      }, {
-        name: '测试', value: 'test'
-      }, {
-        name: '生产', value: 'production'
-      }],
-    })
-  }
   if (!config.logProjectName) {
     promps.push({
       type: 'input',
@@ -96,13 +82,13 @@ const initKubernetes = async (config) => {
 }
 
 const initLogStore = async (config) => {
-  const { logProjectName, namespace, appEnv } = config
+  const { logProjectName, namespace } = config
   const client = new AliyunLog({
     accessKeyId: ACCESSKEY,
     accessKeySecret: ACCESSKEY_SECRET,
     region: REGION,
   });
-  const logStoreName = `ecilogs-${config.namespace}-${config.appEnv}`
+  const logStoreName = `ecilogs-${config.namespace}`
   const logStore = await client.getLogStore(logProjectName, logStoreName).catch(() => null)
   const logStoreConfig = await client.restGet(logProjectName, 'configs', logStoreName).catch(() => null)
   if (!logStore) {
@@ -136,19 +122,19 @@ const initLogStore = async (config) => {
       outputType: 'LogService',
       outputDetail: {
         endpoint: 'cn-hangzhou-intranet.log.aliyuncs.com',
-        logstoreName: `ecilogs-${namespace}-${appEnv}`,
+        logstoreName: `ecilogs-${namespace}`,
          region: 'cn-hangzhou'
       }
     })
   }
-  const machineGroupName = `logtail-${config.namespace}-${config.name}-${config.appEnv}`
+  const machineGroupName = `logtail-${config.namespace}-${config.name}`
   const machineGroup = await client.restGet(logProjectName, 'machinegroups', machineGroupName).catch(() => null)
   if (!machineGroup) {
     console.log('创建机器组')
     await client.restCreate(logProjectName, 'machinegroups', {
       machineIdentifyType: 'userdefined',
       groupName: machineGroupName,
-      machineList: [`${config.namespace}-${config.name}-${config.appEnv}`]
+      machineList: [`${config.namespace}-${config.name}`]
     })
     await client.applyConfigToMachineGroup(logProjectName, machineGroupName, logStoreName)
   }
