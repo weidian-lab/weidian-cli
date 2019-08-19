@@ -61,7 +61,7 @@ const readConfig = async (config) => {
   if (!config.logProjectName) {
     promps.push({
       type: 'input',
-      default: 'weidian-lab',
+      default: 'weidian-lab-develop',
       name: 'logProjectName',
       message: '请输入日志库项目',
       validate: function (input){
@@ -72,6 +72,18 @@ const readConfig = async (config) => {
       }
     })
   }
+  promps.push({
+    type: 'input',
+    name: 'appEnv',
+    default: 'test',
+    message: '请输入应用环境',
+    validate: function (input){
+      if(!input) {
+        return '不能为空'
+      }
+      return true
+    }
+  })
   const answers = await inquirer.prompt(promps)
   Object.assign(config, answers)
 }
@@ -82,25 +94,25 @@ const initKubernetes = async (config) => {
 }
 
 const initLogStore = async (config) => {
-  const { logProjectName, namespace } = config
+  const { logProjectName, appEnv, namespace, name } = config
   const client = new AliyunLog({
     accessKeyId: ACCESSKEY,
     accessKeySecret: ACCESSKEY_SECRET,
     region: REGION,
   });
-  const logStoreName = `ecilogs-${config.namespace}`
-  const logStore = await client.getLogStore(logProjectName, logStoreName).catch(() => null)
-  const logStoreConfig = await client.restGet(logProjectName, 'configs', logStoreName).catch(() => null)
+  const logstoreName = `ecilogs-${namespace}-${appEnv}`
+  const logStore = await client.getLogStore(logProjectName, logstoreName).catch(() => null)
+  const logStoreConfig = await client.restGet(logProjectName, 'configs', logstoreName).catch(() => null)
   if (!logStore) {
     console.log('创建日志库')
-    await client.createLogStore(config.logProjectName, logStoreName, {
+    await client.createLogStore(config.logProjectName, logstoreName, {
       ttl: 10,
       shardCount: 2
     })
   }
   if (!logStoreConfig) {
     await client.restCreate(logProjectName, 'configs', {
-      configName: logStoreName,
+      configName: logstoreName,
       inputType: 'file',
       logSample: '2018-11-16 10:42:33,575 INFO 81 [egg-sequelize](3ms) Executed (default): SELECT 1+1 AS result',
       inputDetail: {
@@ -109,7 +121,7 @@ const initLogStore = async (config) => {
         preserve: true,
         localStorage: true,
         logType: 'common_reg_log',
-        logPath: `/ecilogs-${namespace}`,
+        logPath: `/ecilogs-${namespace}-${appEnv}`,
         logBeginRegex: '\\d+-\\d+-\\d+\\s\\d+:\\d+:\\d+,\\d+\\s.*',
         localStorage: true,
         timeFormat: '',
@@ -122,21 +134,21 @@ const initLogStore = async (config) => {
       outputType: 'LogService',
       outputDetail: {
         endpoint: 'cn-hangzhou-intranet.log.aliyuncs.com',
-        logstoreName: `ecilogs-${namespace}`,
+        logstoreName,
          region: 'cn-hangzhou'
       }
     })
   }
-  const machineGroupName = `logtail-${config.namespace}-${config.name}`
+  const machineGroupName = `logtail-${namespace}-${name}-${appEnv}`
   const machineGroup = await client.restGet(logProjectName, 'machinegroups', machineGroupName).catch(() => null)
   if (!machineGroup) {
     console.log('创建机器组')
     await client.restCreate(logProjectName, 'machinegroups', {
       machineIdentifyType: 'userdefined',
       groupName: machineGroupName,
-      machineList: [`${config.namespace}-${config.name}`]
+      machineList: [`${config.namespace}-${config.name}-${config.appEnv}`]
     })
-    await client.applyConfigToMachineGroup(logProjectName, machineGroupName, logStoreName)
+    await client.applyConfigToMachineGroup(logProjectName, machineGroupName, logstoreName)
   }
 }
 
